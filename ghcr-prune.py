@@ -5,6 +5,7 @@ import dateutil.parser
 import getpass
 import os
 import requests
+import sys
 from datetime import datetime, timedelta
 
 __author__ = "Fiona Klute"
@@ -57,6 +58,11 @@ if __name__ == "__main__":
     r = s.get(f'https://api.github.com/user/packages/'
               f'container/{args.container}/versions')
     versions = r.json()
+
+    if "message" in versions:
+        print(f"Error: {versions['message']}")
+        sys.exit(1)
+
     if args.verbose:
         reset = datetime.fromtimestamp(int(r.headers["x-ratelimit-reset"]))
         print(f'{r.headers["x-ratelimit-remaining"]} requests remaining '
