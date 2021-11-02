@@ -17,6 +17,22 @@ __license__ = "MIT"
 github_api_accept = 'application/vnd.github.v3+json'
 
 
+def do_delete(v, args, requests_sess):
+    ''' Build the delete request
+
+    Or output if we're in dry run only
+    '''
+    if args.dry_run:
+        print(f'would delete {v["id"]}')
+    else:
+        r = s.delete(f'https://api.github.com/user/packages/'
+                        f'container/{args.container}/versions/{v["id"]}')
+        r.raise_for_status()
+        print(f'deleted {v["id"]}')
+
+
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='List versions of a GHCR container image you own, and '
@@ -34,6 +50,9 @@ if __name__ == "__main__":
     parser.add_argument('--dry-run', '-n', action='store_true',
                         help='do not actually prune images, just list which '
                         'would be pruned')
+    parser.add_argument('--tag', '-T',
+                            help='Tag to delete ')
+
 
     # enable bash completion if argcomplete is available
     try:
@@ -82,10 +101,8 @@ if __name__ == "__main__":
         # prune old untagged images if requested
         if del_before is not None and created < del_before \
            and len(metadata['tags']) == 0:
-            if args.dry_run:
-                print(f'would delete {v["id"]}')
-            else:
-                r = s.delete(f'https://api.github.com/user/packages/'
-                             f'container/{args.container}/versions/{v["id"]}')
-                r.raise_for_status()
-                print(f'deleted {v["id"]}')
+            do_delete(v, args, s)
+
+        elif args.tag is not None and args.tag in metadata["tags"]:
+            do_delete(v, args, s)
+
