@@ -7,6 +7,7 @@ import os
 import requests
 import sys
 from datetime import datetime, timedelta
+from pathlib import Path
 
 __author__ = "Fiona Klute"
 __version__ = "0.1"
@@ -52,6 +53,9 @@ if __name__ == "__main__":
                         'would be pruned')
     parser.add_argument('--tag', '-T',
                             help='Tag to delete ')
+
+    parser.add_argument('--glob', '-G',
+                            help='Delete tags matching GLOB')
 
 
     # enable bash completion if argcomplete is available
@@ -102,7 +106,17 @@ if __name__ == "__main__":
         if del_before is not None and created < del_before \
            and len(metadata['tags']) == 0:
             do_delete(v, args, s)
+            continue
 
-        elif args.tag is not None and args.tag in metadata["tags"]:
+        # Prune based on exact tag match if requested
+        if args.tag is not None and args.tag in metadata["tags"]:
             do_delete(v, args, s)
+            continue
 
+        # Prune based tags that match glob
+        if args.glob is not None:
+            for tag in metadata["tags"]:
+                if Path(tag).match(args.glob):
+                    do_delete(v, args, s)
+                    continue
+            continue
